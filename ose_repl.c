@@ -33,7 +33,6 @@
 /* #include <sys/socket.h> */
 /* #include <sys/time.h> */
 #include <sys/types.h>
-/* #include "linenoise.h" */
 
 #include "ose.h"
 #include "ose_context.h"
@@ -59,26 +58,34 @@
 
 #define OSEREPL_HOOK_INIT_POST "/hook/init/post"
 
+/* erase line */
 #define ANSI_CSI_EL0 "\033[0K"
 #define ANSI_CSI_EL1 "\033[1K"
 #define ANSI_CSI_EL2 "\033[2K"
+/* erase display */
+#define ANSI_CSI_ED0 "\033[0J"
+#define ANSI_CSI_ED1 "\033[1J"
+#define ANSI_CSI_ED2 "\033[2J"
+#define ANSI_CSI_ED3 "\033[3J"
 
 /* For debugging */
 #ifdef OSE_DEBUG
-static void pbndl(ose_bundle bundle, const char * const str)
 __attribute__((used))
+static void pbndl(ose_bundle bundle, const char * const str)
 {
     char buf[8192];
     memset(buf, 0, 8192);
     ose_pprintBundle(bundle, buf, 8192);
-    printf("\n%s>>>>>\n%s\n%s<<<<<\n", str, buf, str);
+    fprintf(stderr, "\n\r%s>>>>>\n\r%s\n\r%s<<<<<\n\r",
+            str, buf, str);
 }
-static void pbytes(ose_bundle bundle, int32_t start, int32_t end)
+
 __attribute__((used))
+static void pbytes(ose_bundle bundle, int32_t start, int32_t end)
 {
     char *b = ose_getBundlePtr(bundle);
     for(int32_t i = start; i < end; i++){
-        fprintf(stderr, "%d: %c %d\n", i,
+        fprintf(stderr, "%d: %c %d\n\r", i,
                 (unsigned char)b[i],
                 (unsigned char)b[i]);
     }
@@ -96,6 +103,42 @@ static char *bytes;
 static ose_bundle bundle, osevm, vm_i, vm_s, vm_e, vm_c,
     vm_d, vm_o, vm_x;
 
+void oserepl_lookup(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    ose_bundle vm_e = OSEVM_ENV(osevm);
+    ose_bundle vm_x = ose_enter(osevm, "/_x");
+
+    const char * const address = ose_peekString(vm_s);
+    int32_t mo = ose_getFirstOffsetForPMatch(vm_e, address);
+    if(mo >= OSE_BUNDLE_HEADER_LEN)
+    {
+        ose_drop(vm_s);
+        ose_copyElemAtOffset(mo, vm_e, vm_s);
+        return;
+    }
+    /* if it wasn't present in env, lookup in _x */
+    mo = ose_getFirstOffsetForPMatch(vm_x, address);
+    if(mo >= OSE_BUNDLE_HEADER_LEN)
+    {
+        ose_drop(vm_s);
+        ose_copyElemAtOffset(mo, vm_x, vm_s);
+        return;
+    }
+    /* if it wasn't present in _x, lookup in the symtab */
+    {
+        ose_fn f = ose_symtab_lookup_fn(address);
+        if(f)
+        {
+            ose_drop(vm_s);               
+            ose_pushAlignedPtr(vm_s, f);
+        }else
+        {
+            ;
+        }
+    }
+}
+
 static void oserepl_run(ose_bundle osevm)
 {
     osevm_run(osevm);
@@ -105,22 +148,22 @@ static void oserepl_runHook(ose_bundle osevm,
                             const char * const hookaddr,
                             int32_t hookaddrlen)
 {
-    ose_copyBundle(vm_e, vm_s);
-    ose_pushString(vm_s, hookaddr);
-    OSEVM_LOOKUP(osevm);
-    if(ose_peekType(vm_s) == OSETT_MESSAGE
-       && ose_peekMessageArgType(vm_s) == OSETT_BLOB)
-    {
-        ose_blobToElem(vm_s);
-        ose_pushMessage(vm_i, "/!/exec", strlen("/!/exec"), 0);
-        oserepl_run(osevm);
-        ose_replaceBundle(vm_s, vm_e);
-        ose_clear(vm_s);
-    }
-    else
-    {
-        ose_2drop(vm_s);
-    }
+    /* ose_copyBundle(vm_e, vm_s); */
+    /* ose_pushString(vm_s, hookaddr); */
+    /* OSEVM_LOOKUP(osevm); */
+    /* if(ose_peekType(vm_s) == OSETT_MESSAGE */
+    /*    && ose_peekMessageArgType(vm_s) == OSETT_BLOB) */
+    /* { */
+    /*     ose_blobToElem(vm_s); */
+    /*     ose_pushMessage(vm_i, "/!/exec", strlen("/!/exec"), 0); */
+    /*     oserepl_run(osevm); */
+    /*     ose_replaceBundle(vm_s, vm_e); */
+    /*     ose_clear(vm_s); */
+    /* } */
+    /* else */
+    /* { */
+    /*     ose_2drop(vm_s); */
+    /* } */
 }
 
 static void oserepl_init(char *bytes)
@@ -230,24 +273,26 @@ int main(int ac, char **av)
 
     oserepl_init(bytes);
 
-    ose_pushMessage(vm_e, "/name", strlen("/name"), 1,
+    ose_pushMessage(vm_x, "/name", strlen("/name"), 1,
                     OSETT_STRING, av[0]);
     const char * const homedir = getenv("HOME");
-    ose_pushMessage(vm_e, "/homedir", strlen("/homedir"), 1,
+    ose_pushMessage(vm_x, "/homedir", strlen("/homedir"), 1,
                     OSETT_STRING, homedir);
 
-    ose_pushMessage(vm_e, "/load", strlen("/load"), 1,
+    ose_pushMessage(vm_x, "/load", strlen("/load"), 1,
                     OSETT_ALIGNEDPTR, oserepl_load);
-    ose_pushMessage(vm_e, "/read", strlen("/read"), 1,
+    ose_pushMessage(vm_x, "/read", strlen("/read"), 1,
                     OSETT_ALIGNEDPTR, oserepl_read);
-    ose_pushMessage(vm_e, "/listen", strlen("/listen"), 1,
+    ose_pushMessage(vm_x, "/listen", strlen("/listen"), 1,
                     OSETT_ALIGNEDPTR, oserepl_listen);
-    ose_pushMessage(vm_e, "/stdin", strlen("/stdin"), 1,
+    ose_pushMessage(vm_x, "/stdin", strlen("/stdin"), 1,
                     OSETT_INT32, STDIN_FILENO);
-    ose_pushMessage(vm_e, "/debug", strlen("/debug"), 1,
+#ifdef OSE_DEBUG
+    ose_pushMessage(vm_x, "/debug", strlen("/debug"), 1,
                     OSETT_ALIGNEDPTR, oserepl_debug);
+#endif
 
-    int32_t i = 1;;
+    int32_t i = 1;
     if(!strcmp(av[1], "-f"))
     {
         ose_pushString(vm_s, av[2]);
@@ -256,27 +301,13 @@ int main(int ac, char **av)
         i = 3;
     }
 
-    if(ac > i)
-    {
-        for( ; i < ac; i++)
-        {
-            ose_pushString(vm_s, av[i]);
-        }
-        ose_bundleAll(vm_s);
-        ose_appendBundle(vm_s, vm_i);
-        ose_clear(vm_s);
-        oserepl_run(osevm);
-        oserepl_runHook(osevm,
-                        OSEREPL_HOOK_INIT_POST,
-                        strlen(OSEREPL_HOOK_INIT_POST));
-    }
-
     if((caught = sigsetjmp(jmp_buffer, 1)) != 0)
     {
         switch(caught)
         {
         case SIGABRT:
-            oserepl_init(bytes);
+            /* oserepl_init(bytes); */
+            exit(0);
             break;
         case SIGTERM:
         case SIGINT:
@@ -290,6 +321,27 @@ int main(int ac, char **av)
             return 0;
         }
     }
+
+    ose_pushBundle(vm_s);       /* Stack */
+    ose_pushBundle(vm_s);       /* Env */
+
+    if(ac > i)
+    {
+        /* eval anything passed on the command line */
+        ose_pushBundle(vm_s);
+        for( ; i < ac; i++)
+        {
+            ose_pushString(vm_s, av[i]);
+            ose_push(vm_s);
+        }
+        ose_pushMessage(vm_i, "/!/exec3", strlen("/!/exec3"), 0);
+        oserepl_run(osevm);
+        ose_bundleAll(vm_s);
+        ose_pop(vm_s);
+        oserepl_runHook(osevm,
+                        OSEREPL_HOOK_INIT_POST,
+                        strlen(OSEREPL_HOOK_INIT_POST));
+    }
     ose_termRaw();
     while(1)
     {
@@ -300,20 +352,20 @@ int main(int ac, char **av)
             {
                 if(fds[fdi].revents & POLLIN)
                 {
-                    ose_copyBundle(vm_e, vm_s);
                     ose_pushString(vm_s, "/repl/fd/cb/read");
                     OSEVM_LOOKUP(osevm);
                     ose_pushInt32(vm_s, fdi);
                     ose_nth(vm_s);
-                    ose_pushString(vm_i, "/!/exec");
+                    ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
-
-                    /* ose_replaceBundle(vm_s, vm_e); */
-                    ose_drop(vm_s); /* env */
-                    
+                    ose_swap(vm_s);
                     int32_t curpos = ose_popInt32(vm_s);
+                    ose_swap(vm_s);
                     int32_t newlen = ose_popInt32(vm_s);
+                    ose_swap(vm_s);
                     int32_t oldlen = ose_popInt32(vm_s);
+                    ose_swap(vm_s);
+
                     const char * const str = ose_peekString(vm_s);
                     fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
                     if(curpos < newlen)
@@ -326,6 +378,8 @@ int main(int ac, char **av)
                     }
                     fflush(stdout);
                     ose_drop(vm_s);
+                    ose_bundleAll(vm_s);
+                    ose_pop(vm_s);
                 }
             }
         }

@@ -23,7 +23,7 @@ OSE_FILES_BASENAMES=\
 	ose_print
 OSE_FILES=$(foreach f,$(OSE_FILES_BASENAMES),$(OSE_DIR)/$(f))
 
-REPL_FILES=ose_repl linenoise
+REPL_FILES=ose_repl
 
 ############################################################
 # Derived files
@@ -49,7 +49,8 @@ VM_BUNDLE_SIZES=\
 DEFINES=\
 	$(VM_BUNDLE_SIZES) \
 	-DHAVE_OSE_ENDIAN_H \
-	-DHAVE_OSE_VERSION_H
+	-DHAVE_OSE_VERSION_H \
+	-DOSEVM_LOOKUP=oserepl_lookup
 
 INCLUDES=-I. -I$(OSE_DIR)
 
