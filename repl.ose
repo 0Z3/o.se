@@ -1,0 +1,10 @@
+/$/stdin
+/!/listen
+./modules/lined/ose_lined.so
+/!/load
+/<</_x
+/>/_x
+/'/!/lined/read
+/s//repl/fd/cb/read
+/!/assign
+/</_x
