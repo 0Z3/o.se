@@ -352,6 +352,7 @@ int main(int ac, char **av)
             {
                 if(fds[fdi].revents & POLLIN)
                 {
+                    ose_pushInt32(vm_s, fds[fdi].fd);
                     ose_pushInt32(vm_s, fdi);
                     ose_dup(vm_s);
                     ose_pushString(vm_s, "/repl/fd/cb/read");
@@ -362,7 +363,7 @@ int main(int ac, char **av)
                     OSEVM_LOOKUP(osevm);
                     ose_rot(vm_s);
                     ose_nth(vm_s);
-                    ose_pushInt32(vm_s, 2);
+                    ose_pushInt32(vm_s, 3);
                     ose_bundleFromTop(vm_s);
                     ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
