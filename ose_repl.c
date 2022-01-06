@@ -352,30 +352,23 @@ int main(int ac, char **av)
             {
                 if(fds[fdi].revents & POLLIN)
                 {
+                    ose_pushInt32(vm_s, fdi);
+                    ose_dup(vm_s);
                     ose_pushString(vm_s, "/repl/fd/cb/read");
                     OSEVM_LOOKUP(osevm);
-                    ose_pushInt32(vm_s, fdi);
+                    ose_swap(vm_s);
                     ose_nth(vm_s);
+                    ose_pushString(vm_s, "/repl/fd/cb/print");
+                    OSEVM_LOOKUP(osevm);
+                    ose_rot(vm_s);
+                    ose_nth(vm_s);
+                    ose_pushInt32(vm_s, 2);
+                    ose_bundleFromTop(vm_s);
                     ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
                     ose_swap(vm_s);
-                    int32_t curpos = ose_popInt32(vm_s);
-                    ose_swap(vm_s);
-                    int32_t newlen = ose_popInt32(vm_s);
-                    ose_swap(vm_s);
-                    int32_t oldlen = ose_popInt32(vm_s);
-                    ose_swap(vm_s);
-
                     const char * const str = ose_peekString(vm_s);
                     fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
-                    if(curpos < newlen)
-                    {
-                        int i;
-                        for(i = 0; i < newlen - curpos; i++)
-                        {
-                            fprintf(stdout, "\b");
-                        }
-                    }
                     fflush(stdout);
                     ose_drop(vm_s);
                     ose_bundleAll(vm_s);

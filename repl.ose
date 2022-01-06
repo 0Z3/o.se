@@ -3,8 +3,14 @@
 ./modules/lined/ose_lined.so
 /!/load
 /<</_x
+./modules/net/udp/ose_udp.so
+/!/load
+/<</_x
 />/_x
 /'/!/lined/read
 /s//repl/fd/cb/read
+/!/assign
+/'/!/lined/print
+/s//repl/fd/cb/print
 /!/assign
 /</_x
