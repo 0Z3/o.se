@@ -12,7 +12,7 @@
 /!/listen
 />/_x
 /'/!/lined/read
-/'/!/udp/receive
+/'/!/udp/recv/exec
 /!/push
 /s//repl/fd/cb/read
 /!/assign
