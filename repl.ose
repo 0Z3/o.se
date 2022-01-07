@@ -11,6 +11,11 @@
 /!/udp/sock
 /!/listen
 />/_x
+127.0.0.1
+/i/10001
+/!/udp/sock
+/s//udp/send/sock
+/!/assign
 /'/!/lined/read
 /'/!/udp/recv/exec
 /!/push
