@@ -237,6 +237,11 @@ static void oserepl_listen(ose_bundle osevm)
         };
 }
 
+static void oserepl_quit(ose_bundle osevm)
+{
+    exit(0);
+}
+
 sigjmp_buf jmp_buffer;
 
 int main(int ac, char **av)
@@ -285,6 +290,8 @@ int main(int ac, char **av)
                     OSETT_ALIGNEDPTR, oserepl_read);
     ose_pushMessage(vm_x, "/listen", strlen("/listen"), 1,
                     OSETT_ALIGNEDPTR, oserepl_listen);
+    ose_pushMessage(vm_x, "/quit", strlen("/quit"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_quit);
     ose_pushMessage(vm_x, "/stdin", strlen("/stdin"), 1,
                     OSETT_INT32, STDIN_FILENO);
 #ifdef OSE_DEBUG

@@ -1,9 +1,9 @@
 /$/stdin
 /!/listen
-./modules/lined/ose_lined.so
+/s/./modules/lined/ose_lined.so
 /!/load
 /<</_x
-./modules/net/udp/ose_udp.so
+/s/./modules/net/udp/ose_udp.so
 /!/load
 /<</_x
 127.0.0.1
@@ -11,7 +11,7 @@
 /!/udp/sock
 /!/listen
 />/_x
-127.0.0.1
+/s/127.0.0.1
 /i/10001
 /!/udp/sock
 /s//udp/send/sock
