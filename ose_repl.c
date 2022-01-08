@@ -411,13 +411,6 @@ int main(int ac, char **av)
                             ose_swap(vm_s);
                         }
                     }
-                    /* { */
-                    /*     ose_swap(vm_s); */
-                    /*     const char * const str = ose_peekString(vm_s); */
-                    /*     fprintf(stdout, ANSI_CSI_EL2"\r%s", str); */
-                    /*     fflush(stdout); */
-                    /*     ose_drop(vm_s); */
-                    /* } */
                     ose_bundleAll(vm_s);
                     ose_pop(vm_s);
                 }

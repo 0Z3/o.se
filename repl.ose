@@ -1,26 +1,45 @@
+/#/ listen to stdin 
 /$/stdin
 /!/listen
+
+
+/#/ load lined module
 /s/./modules/lined/ose_lined.so
 /!/load
 /<</_x
+
+
+/#/ load udp module
 /s/./modules/net/udp/ose_udp.so
 /!/load
 /<</_x
-127.0.0.1
+
+
+/#/ listen for udp input on port 10000
+/s/127.0.0.1
 /i/10000
 /!/udp/sock
 /!/listen
+
+
 />/_x
+/#/ store a socket for sending udp to localhost on port 10001
 /s/127.0.0.1
 /i/10001
 /!/udp/sock
 /s//udp/send/sock
 /!/assign
+
+
+/#/ add read callbacks for lined and udp recv
 /'/!/lined/read
 /'/!/udp/recv/exec
 /!/push
 /s//repl/fd/cb/read
 /!/assign
+
+
+/#/ add print callbacks for lined and udp recv
 /'/!/lined/print
 /'/!/udp/print
 /!/push
