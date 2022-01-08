@@ -322,8 +322,24 @@ int main(int ac, char **av)
         }
     }
 
-    ose_pushBundle(vm_s);       /* Stack */
-    ose_pushBundle(vm_s);       /* Env */
+    {
+        if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE)
+        {
+            if(ose_peekType(vm_s) == OSETT_MESSAGE
+               && ose_peekMessageArgType(vm_s) == OSETT_STRING)
+            {
+                const char * const str = ose_peekString(vm_s);
+                fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
+                fflush(stdout);
+            }
+            ose_clear(vm_s);
+        }
+    }
+
+    {
+        ose_pushBundle(vm_s);       /* Stack */
+        ose_pushBundle(vm_s);       /* Env */
+    }
 
     if(ac > i)
     {
@@ -369,11 +385,32 @@ int main(int ac, char **av)
                     ose_bundleFromTop(vm_s);
                     ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
-                    ose_swap(vm_s);
-                    const char * const str = ose_peekString(vm_s);
-                    fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
-                    fflush(stdout);
-                    ose_drop(vm_s);
+                    if(ose_bundleHasAtLeastNElems(vm_s, 2)
+                       == OSETT_TRUE)
+                    {
+                        ose_swap(vm_s);
+                        if((ose_peekType(vm_s) == OSETT_MESSAGE)
+                           && (ose_peekMessageArgType(vm_s)
+                               == OSETT_STRING))
+                        {
+                            const char * const str =
+                                ose_peekString(vm_s);
+                            fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
+                            fflush(stdout);
+                            ose_drop(vm_s);
+                        }
+                        else
+                        {
+                            ose_swap(vm_s);
+                        }
+                    }
+                    /* { */
+                    /*     ose_swap(vm_s); */
+                    /*     const char * const str = ose_peekString(vm_s); */
+                    /*     fprintf(stdout, ANSI_CSI_EL2"\r%s", str); */
+                    /*     fflush(stdout); */
+                    /*     ose_drop(vm_s); */
+                    /* } */
                     ose_bundleAll(vm_s);
                     ose_pop(vm_s);
                 }
