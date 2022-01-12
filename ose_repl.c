@@ -33,6 +33,7 @@
 /* #include <sys/socket.h> */
 /* #include <sys/time.h> */
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include "ose.h"
 #include "ose_context.h"
@@ -370,6 +371,10 @@ int main(int ac, char **av)
     {
         if(poll(fds, nfd, -1))
         {
+            /* struct winsize w; */
+            /* ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); */
+            /* fprintf(stderr, "lines: %d\n", w.ws_row); */
+            /* fprintf(stderr, "columns: %d\n", w.ws_col); */
             short fdi;
             for(fdi = 0; fdi < nfd; fdi++)
             {
