@@ -32,11 +32,26 @@
 /s//udp/send/sock
 /!/assign
 
-/#/ add a read callback 
-/'/!/lined/read
-/'/!/udp/recv/exec
+/#/ make a bundle to be executed when there are chars
+/#/ to read from stdin
+/!/make/bundle
+/'/!/readfd
+/!/push
+/'/!/lined/char
+/!/push
+/s//readchar
+/!/assign
+
+/#/ add read callbacks for stdin and the udp socket
+/s//readchar
+/s//udp/recv/exec
 /!/push
 /s//repl/fd/cb/read
+/!/assign
+
+/#/ add a key binding for C^c (quit)
+/$/quit
+/s//lined/binding/C^c
 /!/assign
 
 /#/ substitute the parser for lined's default parser,

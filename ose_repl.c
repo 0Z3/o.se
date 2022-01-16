@@ -225,12 +225,38 @@ static void oserepl_read(ose_bundle osevm)
     }
 }
 
+static void oserepl_readFromFileDescriptor(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    int32_t fd;
+    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+       && ose_peekType(vm_s) == OSETT_MESSAGE
+       && ose_peekMessageArgType(vm_s) == OSETT_INT32)
+    {
+        fd = ose_popInt32(vm_s);
+    }
+    else
+    {
+        fprintf(stderr, "/!/readfd requires a file descriptor "
+                "(int32) on the stack\n");
+        return;
+    }
+    char buf[32];
+    int32_t n = ose_termRead(fd, 32, buf);
+    int32_t i;
+    for(i = n - 1; i >= 0; --i)
+    {
+        ose_pushInt32(vm_s, buf[i]);
+    }
+    ose_pushInt32(vm_s, n);
+}
+
 static void oserepl_listen(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
-    assert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE);
-    assert(ose_peekType(vm_s) == OSETT_MESSAGE);
-    assert(ose_peekMessageArgType(vm_s) == OSETT_INT32);
+    ose_assert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE);
+    ose_assert(ose_peekType(vm_s) == OSETT_MESSAGE);
+    ose_assert(ose_peekMessageArgType(vm_s) == OSETT_INT32);
     int32_t fileno = ose_popInt32(vm_s);
     fds[nfd++] = (struct pollfd)
         {
@@ -289,6 +315,9 @@ int main(int ac, char **av)
                     OSETT_ALIGNEDPTR, oserepl_load);
     ose_pushMessage(vm_x, "/read", strlen("/read"), 1,
                     OSETT_ALIGNEDPTR, oserepl_read);
+    ose_pushMessage(vm_x, "/readfd", strlen("/readfd"), 1,
+                    OSETT_ALIGNEDPTR,
+                    oserepl_readFromFileDescriptor);
     ose_pushMessage(vm_x, "/listen", strlen("/listen"), 1,
                     OSETT_ALIGNEDPTR, oserepl_listen);
     ose_pushMessage(vm_x, "/quit", strlen("/quit"), 1,
@@ -386,14 +415,16 @@ int main(int ac, char **av)
                         OSEVM_LOOKUP(osevm);
                         ose_pushInt32(vm_s, fdi);
                         ose_nth(vm_s);
+                        ose_pushString(vm_s, "/!/!");
                     }
                     {
                         ose_pushString(vm_s, "/repl/fd/cb/print");
                         OSEVM_LOOKUP(osevm);
                         ose_pushInt32(vm_s, fdi);
                         ose_nth(vm_s);
+                        ose_pushString(vm_s, "/!/!");
                     }
-                    ose_pushInt32(vm_s, 3);
+                    ose_pushInt32(vm_s, 5);
                     ose_bundleFromTop(vm_s);
                     ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
