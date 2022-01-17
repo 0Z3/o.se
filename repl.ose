@@ -5,54 +5,49 @@
 /#/ load lined module
 /s/./modules/lined/ose_lined.so
 /!/load
-/<</_x
+/<</_e
 
 /#/ load udp module
 /s/./modules/net/udp/ose_udp.so
 /!/load
-/<</_x
+/<</_e
 
 /#/ listen for udp input on port 10000
 /s/127.0.0.1
 /i/10000
-/!/udp/sock
+/!/udp/sock/bind
 /!/listen
 
-/>/_x
 /#/ store a socket for sending udp to localhost on port 10001
 /s/127.0.0.1
 /i/10001
-/!/udp/sock
-/s//udp/send/sock
-/!/assign
+/!/udp/sock/connect
+/@/udp/send/sock
 
 /#/ make a bundle to be executed when there are chars
 /#/ to read from stdin
-/!/make/bundle
 /'/!/readfd
-/!/push
 /'/!/lined/char
-/!/push
-/s//readchar
-/!/assign
+/!/bundle/all
+/@/readchar
 
 /#/ add read callbacks for stdin and the udp socket
 /s//readchar
 /s//udp/recv/exec
 /!/push
-/s//repl/fd/cb/read
-/!/assign
+/@/repl/fd/cb/read
 
 /#/ add a key binding for C^c (quit)
 /$/quit
-/s//lined/binding/C^c
-/!/assign
+/@/lined/binding/C^c
 
 /#/ add print callbacks for lined and udp recv
 /'/!/lined/print
 /'/!/udp/print
 /!/push
-/s//repl/fd/cb/print
-/!/assign
-/</_x
+/@/repl/fd/cb/print
+/>/_e
+/<</_x
+/!/make/bundle
+/</_e
 /!/lined/init
