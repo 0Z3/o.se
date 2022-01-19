@@ -251,6 +251,45 @@ static void oserepl_readFromFileDescriptor(ose_bundle osevm)
     ose_pushInt32(vm_s, n);
 }
 
+static void oserepl_format(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    int32_t n = ose_pprintBundle(vm_s, NULL, 0);
+    int32_t pn = ose_pnbytes(n);
+    ose_pushBlob(vm_s, pn, NULL);
+    char *p = ose_peekBlob(vm_s) + 4;
+    ose_pprintBundle(vm_s, p, pn);
+    ose_pushInt32(vm_s, OSETT_STRING);
+    ose_blobToType(vm_s);
+}
+
+static void oserepl_print(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+       && ose_peekType(vm_s) == OSETT_MESSAGE
+       && ose_peekMessageArgType(vm_s) == OSETT_STRING)
+    {
+        const char * const str = ose_peekString(vm_s);
+        printf(ANSI_CSI_EL2"\r%s", str);
+        fflush(stdout);
+        ose_drop(vm_s);
+    }
+}
+
+static void oserepl_println(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+       && ose_peekType(vm_s) == OSETT_MESSAGE
+       && ose_peekMessageArgType(vm_s) == OSETT_STRING)
+    {
+        const char * const str = ose_peekString(vm_s);
+        printf(ANSI_CSI_EL2"\r%s\n", str);
+        ose_drop(vm_s);
+    }
+}
+
 static void oserepl_listen(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
@@ -318,19 +357,29 @@ int main(int ac, char **av)
     ose_pushMessage(vm_x, "/readfd", strlen("/readfd"), 1,
                     OSETT_ALIGNEDPTR,
                     oserepl_readFromFileDescriptor);
+    ose_pushMessage(vm_x, "/format", strlen("/format"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_format);
+    ose_pushMessage(vm_x, "/print", strlen("/print"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_print);
+    ose_pushMessage(vm_x, "/println", strlen("/println"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_println);
     ose_pushMessage(vm_x, "/listen", strlen("/listen"), 1,
                     OSETT_ALIGNEDPTR, oserepl_listen);
     ose_pushMessage(vm_x, "/quit", strlen("/quit"), 1,
                     OSETT_ALIGNEDPTR, oserepl_quit);
     ose_pushMessage(vm_x, "/stdin", strlen("/stdin"), 1,
                     OSETT_INT32, STDIN_FILENO);
+    ose_pushMessage(vm_x, "/stdout", strlen("/stdout"), 1,
+                    OSETT_INT32, STDOUT_FILENO);
+    ose_pushMessage(vm_x, "/stderr", strlen("/stderr"), 1,
+                    OSETT_INT32, STDERR_FILENO);
 #ifdef OSE_DEBUG
     ose_pushMessage(vm_x, "/debug", strlen("/debug"), 1,
                     OSETT_ALIGNEDPTR, oserepl_debug);
 #endif
 
     int32_t i = 1;
-    if(!strcmp(av[1], "-f"))
+    if(ac > 1 && !strcmp(av[1], "-f"))
     {
         ose_pushString(vm_s, av[2]);
         oserepl_load(osevm);
@@ -356,20 +405,6 @@ int main(int ac, char **av)
             fprintf(stderr,
                     "error installing signal handler\n");
             return 0;
-        }
-    }
-
-    {
-        if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE)
-        {
-            if(ose_peekType(vm_s) == OSETT_MESSAGE
-               && ose_peekMessageArgType(vm_s) == OSETT_STRING)
-            {
-                const char * const str = ose_peekString(vm_s);
-                fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
-                fflush(stdout);
-            }
-            ose_clear(vm_s);
         }
     }
 
@@ -400,53 +435,18 @@ int main(int ac, char **av)
     {
         if(poll(fds, nfd, -1))
         {
-            /* struct winsize w; */
-            /* ioctl(STDOUT_FILENO, TIOCGWINSZ, &w); */
-            /* fprintf(stderr, "lines: %d\n", w.ws_row); */
-            /* fprintf(stderr, "columns: %d\n", w.ws_col); */
             short fdi;
             for(fdi = 0; fdi < nfd; fdi++)
             {
                 if(fds[fdi].revents & POLLIN)
                 {
+                    ose_pushBundle(vm_s);
                     ose_pushInt32(vm_s, fds[fdi].fd);
-                    {
-                        ose_pushString(vm_s, "/repl/fd/cb/read");
-                        OSEVM_LOOKUP(osevm);
-                        ose_pushInt32(vm_s, fdi);
-                        ose_nth(vm_s);
-                        ose_pushString(vm_s, "/!/!");
-                    }
-                    {
-                        ose_pushString(vm_s, "/repl/fd/cb/print");
-                        OSEVM_LOOKUP(osevm);
-                        ose_pushInt32(vm_s, fdi);
-                        ose_nth(vm_s);
-                        ose_pushString(vm_s, "/!/!");
-                    }
-                    ose_pushInt32(vm_s, 5);
-                    ose_bundleFromTop(vm_s);
+                    ose_push(vm_s);
+                    ose_pushString(vm_s, "/!/repl/run");
+                    ose_push(vm_s);
                     ose_pushString(vm_i, "/!/exec3");
                     oserepl_run(osevm);
-                    if(ose_bundleHasAtLeastNElems(vm_s, 2)
-                       == OSETT_TRUE)
-                    {
-                        ose_swap(vm_s);
-                        if((ose_peekType(vm_s) == OSETT_MESSAGE)
-                           && (ose_peekMessageArgType(vm_s)
-                               == OSETT_STRING))
-                        {
-                            const char * const str =
-                                ose_peekString(vm_s);
-                            fprintf(stdout, ANSI_CSI_EL2"\r%s", str);
-                            fflush(stdout);
-                            ose_drop(vm_s);
-                        }
-                        else
-                        {
-                            ose_swap(vm_s);
-                        }
-                    }
                     ose_bundleAll(vm_s);
                     ose_pop(vm_s);
                 }

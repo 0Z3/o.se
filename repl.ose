@@ -1,53 +1,170 @@
-/#/ listen to stdin 
+/#/ Listen to stdin.
 /$/stdin
+/!/dup
 /!/listen
+/@/fd/stdin
 
-/#/ load lined module
+/#/ Load lined module.
 /s/./modules/lined/ose_lined.so
 /!/load
 /<</_e
 
-/#/ load udp module
+/#/ Load udp module.
 /s/./modules/net/udp/ose_udp.so
 /!/load
 /<</_e
 
-/#/ listen for udp input on port 10000
+/#/ Listen for udp input on port 10000.
 /s/127.0.0.1
 /i/10000
 /!/udp/sock/bind
+/!/dup
 /!/listen
+/@/fd/udp
 
-/#/ store a socket for sending udp to localhost on port 10001
+/#/ Store a socket for sending udp to localhost on port 10001.
 /s/127.0.0.1
 /i/10001
 /!/udp/sock/connect
 /@/udp/send/sock
 
-/#/ make a bundle to be executed when there are chars
-/#/ to read from stdin
-/'/!/readfd
-/'/!/lined/char
-/!/bundle/all
-/@/readchar
-
-/#/ add read callbacks for stdin and the udp socket
-/s//readchar
-/s//udp/recv/exec
-/!/push
-/@/repl/fd/cb/read
-
-/#/ add a key binding for C^c (quit)
+/#/ Add a key binding for C^c (quit).
 /$/quit
 /@/lined/binding/C^c
 
-/#/ add print callbacks for lined and udp recv
+/#/ ############################################################
+/#/ /@/lined/binding/RET
+/#/ 
+/#/ Call /lined/line to handle the input, and then style the
+/#/ output by coloring the prompt and last command and printing
+/#/ the output.
+/#/ ############################################################
+/'/!/lined/addtohist
+/#/ The terminal doesn't echo, so we have to print the prompt
+/#/ and the command that was typed if we want to see them.
+/'/!/dup
+/'/>/lo
+/'/s//ps
+/'/!/lookup
+/'/!/nip
+/'/!/swap
+/'/!/push
+/'/!/concat/strings
+/'/$/ansi/color/green
+/'/!/color/text
+/'/!/println
+
+/#/ Execute the command that was entered.
+/'/!/exec1
+/#/ Store the environment
+/'/</_e
+
+/#/ Bundle the whole stack and print it.
+/'/!/bundle/all
+/'/!/lined/format
+/'/!/push
+/'/!/unpack/drop
+/'/$/ansi/color/cyan
+/'/!/color/text
+/'/!/println
+
+/#/ Finally, set up our prompt. No need to print, since this
+/#/ procedure was called by the one that handles stdin, which
+/#/ prints after processing the most recent char.
+/'/!/lined/prompt
+/!/bundle/all
+/@/lined/binding/RET
+
+/#/ ############################################################
+/#/ Process input.
+/#/ ############################################################
+
+/#/ Process stdin.
+/'/$/fd/x
+/'/!/readfd
+/'/!/lined/char
 /'/!/lined/print
-/'/!/udp/print
+/'/!/print
+/!/bundle/all
+/@/stdin/proc
+
+/#/ Process udp input.
+/'/$/fd/x
+/'/!/udp/recv
+/'/!/format
+/'/!/println
+/!/bundle/all
+/@/udp/proc
+
+/#/ ############################################################
+/#/ /@/repl/run
+/#/ 
+/#/ This is the bundle that will be run when the host has
+/#/ some input ready to be read.
+/#/ ############################################################
+
+/#/ Store the file descriptor that the host left on the stack.
+/'/>/_x
+/'/!/swap
+/'/s//fd/x
+/'/!/assign
+/'/</_x
+
+/#/ We are listening to stdin and a udp socket. Check to
+/#/ see which file descriptor is ready, and process it.
+
+/#/ Do nothing if it's not a file descriptor we know about.
+/!/make/bundle
+
+/#/ Process udp.
+/!/make/bundle
+/'/!/udp/proc
 /!/push
-/@/repl/fd/cb/print
+
+/#/ Is it udp?
+/'/$/fd/x
+/'/$/fd/udp
+/'/!/eql
+/'/!/if
+
+/#/ /if calls /exec which leaves the env on the stack.
+/'/</_e
+
+/#/ This is the 'else' bundle for the /if message below
+/i/7
+/!/bundle/fromtop
+
+/#/ Process stdin
+/!/make/bundle
+/'/!/stdin/proc
+/!/push
+
+/#/ Is it stdin?
+/'/$/fd/x
+/'/$/fd/stdin
+/'/!/eql
+/'/!/if
+
+/#/ /if calls /exec which leaves the env on the stack.
+/'/</_e
+/!/bundle/all
+/@/repl/run
+
+/s/./hosts/repl/ansi_colorcodes.ose
+/!/load
+
+/#/ ############################################################
+/#/ Finalize everything we've set up and initialize the prompt.
+/#/ ############################################################
+
+/#/ Move everything we stored in the env to _x, and clear the env.
 />/_e
 /<</_x
 /!/make/bundle
 /</_e
-/!/lined/init
+
+/#/ Set up lined.
+/#/ /!/lined/init
+/!/lined/prompt
+/!/lined/print
+/!/print
