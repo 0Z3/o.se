@@ -19,11 +19,11 @@ OSE_FILES_BASENAMES=\
 	ose_builtins\
 	sys/ose_load\
 	sys/ose_time\
-	sys/ose_term\
 	ose_print
+
 OSE_FILES=$(foreach f,$(OSE_FILES_BASENAMES),$(OSE_DIR)/$(f))
 
-REPL_FILES=ose_repl
+REPL_FILES=ose_repl ose_term
 
 ############################################################
 # Derived files

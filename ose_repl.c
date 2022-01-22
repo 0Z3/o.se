@@ -44,8 +44,9 @@
 #include "ose_symtab.h"
 #include "ose_print.h"
 #include "sys/ose_load.h"
-#include "sys/ose_term.h"
 /* #include "sys/ose_time.h" */
+
+#include "ose_term.h"
 
 #if defined(WIN32) || defined(__MINGW32__)
 #define sigsetjmp(jb,s) setjmp(jb)
