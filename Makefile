@@ -6,7 +6,7 @@ all: release
 ############################################################
 # files
 ############################################################
-OSE_DIR=../..
+LIBOSE_DIR=libose
 OSE_FILES_BASENAMES=\
 	ose\
 	ose_util\
@@ -21,18 +21,18 @@ OSE_FILES_BASENAMES=\
 	sys/ose_time\
 	ose_print
 
-OSE_FILES=$(foreach f,$(OSE_FILES_BASENAMES),$(OSE_DIR)/$(f))
+OSE_FILES=$(foreach f,$(OSE_FILES_BASENAMES),$(LIBOSE_DIR)/$(f))
 
 REPL_FILES=ose_repl ose_term
 
 ############################################################
 # Derived files
 ############################################################
-$(OSE_DIR)/sys/ose_endian.h:
-	cd $(OSE_DIR) && $(MAKE) sys/ose_endian.h
+$(LIBOSE_DIR)/sys/ose_endian.h:
+	cd $(LIBOSE_DIR) && $(MAKE) sys/ose_endian.h
 
 ose_version.h:
-	$(MAKE) -f $(OSE_DIR)/Makefile ose_version.h
+	$(MAKE) -f $(LIBOSE_DIR)/Makefile ose_version.h
 
 ############################################################
 # Flags and options
@@ -52,7 +52,7 @@ DEFINES=\
 	-DHAVE_OSE_VERSION_H \
 	-DOSEVM_LOOKUP=oserepl_lookup
 
-INCLUDES=-I. -I$(OSE_DIR)
+INCLUDES=-I. -I$(LIBOSE_DIR)
 
 CFLAGS_DEBUG=-Wall -DOSE_CONF_DEBUG -O0 -glldb -fsanitize=undefined
 CFLAGS_RELEASE=-Wall -O3
@@ -64,16 +64,16 @@ LDFLAGS=-lm -ldl -rdynamic
 ############################################################
 .PHONY: release
 release: CFLAGS=$(CFLAGS_RELEASE) $(INCLUDES) $(DEFINES)
-release: ose
+release: o.se
 
 .PHONY: debug
 debug: CFLAGS=$(CFLAGS_DEBUG) $(INCLUDES) $(DEFINES)
-debug: ose
+debug: o.se
 
 
-ose: CMD=$(CC) $(CFLAGS) $(LDFLAGS) -o ose \
+o.se: CMD=$(CC) $(CFLAGS) $(LDFLAGS) -o o.se \
 		$(OSE_FILES:=.c) $(REPL_FILES:=.c)
-ose: $(OSE_FILES:=.c) $(REPL_FILES:=.c) $(OSE_DIR)/sys/ose_endian.h ose_version.h
+o.se: $(OSE_FILES:=.c) $(REPL_FILES:=.c) $(LIBOSE_DIR)/sys/ose_endian.h ose_version.h
 	$(CMD)
 
 .PHONY: clean

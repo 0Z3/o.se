@@ -1,0 +1,9 @@
+[submodule "libose"]
+	path = libose
+	url = https://github.com/0Z3/libose
+[submodule "o.se.lined"]
+	path = o.se.lined
+	url = https://github.com/0Z3/o.se.lined
+[submodule "o.se.udp"]
+	path = o.se.udp
+	url = https://github.com/0Z3/o.se.udp
