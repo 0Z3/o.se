@@ -7,3 +7,6 @@
 [submodule "o.se.udp"]
 	path = o.se.udp
 	url = https://github.com/0Z3/o.se.udp
+[submodule "o.se.oscbn"]
+	path = o.se.oscbn
+	url = https://github.com/0Z3/o.se.oscbn.git
