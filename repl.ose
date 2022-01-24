@@ -1,9 +1,3 @@
-/#/ Listen to stdin.
-/$/stdin
-/!/dup
-/!/listen
-/@/fd/stdin
-
 /#/ Load lined module.
 /s/./o.se.lined/o.se.lined.so
 /!/load
@@ -14,13 +8,52 @@
 /!/load
 /<</_e
 
-/#/ Listen for udp input on port 10000.
+/#/ ############################################################
+/#/ /@/make/fd/cb
+/#/
+/#/ This takes a file descriptor (int) on top of the stack,
+/#/ and a bundle that will be executed when that file descriptor
+/#/ has data to be read.
+/#/ ############################################################
+/'/!/s
+/s//fd/cb/
+/'/!/swap
+/'/!/push
+/'/!/concat/strings
+/'/>/_x
+/'/!/-rot
+/'/!/assign
+/'/</_x
+/!/bundle/all
+/@/make/fd/cb
+
+/#/ ############################################################
+/#/ /@/udp/receive
+/#/
+/#/ Helper function to set up a UDP port to listen to. Takes
+/#/ a port on top of the stack, and a bundle to be executed
+/#/ the file descriptor that is associated with that port has
+/#/ data to be read.
+/#/ ############################################################
 /s/127.0.0.1
-/i/10000
-/!/udp/sock/bind
+/'/!/swap
+/'/!/udp/sock/bind
+/'/!/dup
+/'/!/listen
+/'/!/make/fd/cb
+/!/bundle/all
+/@/udp/receive
+
+/#/ Listen to stdin.
+/'/!/readfd
+/'/!/lined/char
+/'/!/lined/print
+/'/!/print
+/!/bundle/all
+/$/stdin
 /!/dup
 /!/listen
-/@/fd/udp
+/!/make/fd/cb
 
 /#/ Store a socket for sending udp to localhost on port 10001.
 /s/127.0.0.1
@@ -31,6 +64,14 @@
 /#/ Add a key binding for C^c (quit).
 /$/quit
 /@/lined/binding/C^c
+
+/#/ Parser does nothing, but can be replaced by another.
+/!/make/bundle
+/@/repl/parse
+
+/'/!/lined/format
+/!/bundle/all
+/@/repl/format
 
 /#/ ############################################################
 /#/ /@/lined/binding/RET
@@ -55,13 +96,14 @@
 /'/!/println
 
 /#/ Execute the command that was entered.
+/'/!/repl/parse
 /'/!/exec1
 /#/ Store the environment
 /'/</_e
 
 /#/ Bundle the whole stack and print it.
 /'/!/bundle/all
-/'/!/lined/format
+/'/!/repl/format
 /'/!/push
 /'/!/unpack/drop
 /'/$/ansi/color/cyan
@@ -103,52 +145,58 @@
 /#/ some input ready to be read.
 /#/ ############################################################
 
-/#/ Store the file descriptor that the host left on the stack.
-/'/>/_x
+/'/!/dup
+/'/!/s
+/s//fd/cb/
 /'/!/swap
-/'/s//fd/x
-/'/!/assign
-/'/</_x
-
-/#/ We are listening to stdin and a udp socket. Check to
-/#/ see which file descriptor is ready, and process it.
-
-/#/ Do nothing if it's not a file descriptor we know about.
-/!/make/bundle
-
-/#/ Process udp.
-/!/make/bundle
-/'/!/udp/proc
-/!/push
-
-/#/ Is it udp?
-/'/$/fd/x
-/'/$/fd/udp
-/'/!/eql
-/'/!/if
-
-/#/ /if calls /exec which leaves the env on the stack.
-/'/</_e
-
-/#/ This is the 'else' bundle for the /if message below
-/i/7
-/!/bundle/fromtop
-
-/#/ Process stdin
-/!/make/bundle
-/'/!/stdin/proc
-/!/push
-
-/#/ Is it stdin?
-/'/$/fd/x
-/'/$/fd/stdin
-/'/!/eql
-/'/!/if
-
-/#/ /if calls /exec which leaves the env on the stack.
-/'/</_e
+/'/!/push
+/'/!/concat/strings
+/'/!/!
 /!/bundle/all
 /@/repl/run
+
+/#/ ############################################################
+/#/ /@/lang/oscbn
+/#/ 
+/#/ Change to the oscbn parser / formatter.
+/#/ ############################################################
+/s/o.se.oscbn/o.se.oscbn.so
+/'/!/load
+/'/<</_x
+/'/>/_x
+/!/make/bundle
+/'/!/oscbn/parse
+/!/push
+/s//repl/parse
+/'/!/assign
+/!/make/bundle
+/'/!/oscbn/println
+/!/push
+/s//repl/format
+/'/!/assign
+/'/!/debug
+/'/</_x
+/!/bundle/all
+/@/lang/oscbn
+
+/#/ ############################################################
+/#/ /@/lang/protosc
+/#/
+/#/ Change to the protOSC parser / formatter.
+/#/ ############################################################
+/'/>/_x
+/!/make/bundle
+/s//repl/parse
+/'/!/assign
+/!/make/bundle
+/'/!/format
+/!/push
+/s//repl/format
+/'/!/assign
+/'/!/debug
+/'/</_x
+/!/bundle/all
+/@/lang/protosc
 
 /s/./ansi_colorcodes.ose
 /!/load
