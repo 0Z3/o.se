@@ -55,12 +55,6 @@
 /!/listen
 /!/make/fd/cb
 
-/#/ Store a socket for sending udp to localhost on port 10001.
-/s/127.0.0.1
-/i/10001
-/!/udp/sock/connect
-/@/udp/send/sock
-
 /#/ Add a key binding for C^c (quit).
 /$/quit
 /@/lined/binding/C^c
@@ -155,6 +149,18 @@
 /!/bundle/all
 /@/repl/run
 
+/#/ parser on top, then pretty printer
+/'/>/_x
+/'/!/swap
+/s//repl/parse
+/'/!/assign
+/'/!/swap
+/s//repl/format
+/'/!/assign
+/'/</_x
+/!/bundle/all
+/@/lang/set
+
 /#/ ############################################################
 /#/ /@/lang/oscbn
 /#/ 
@@ -163,19 +169,16 @@
 /s/o.se.oscbn/o.se.oscbn.so
 /'/!/load
 /'/<</_x
-/'/>/_x
-/!/make/bundle
-/'/!/oscbn/parse
-/!/push
-/s//repl/parse
-/'/!/assign
+/!/bundle/all
+/@/load/lang/oscbn
+
 /!/make/bundle
 /'/!/oscbn/println
 /!/push
-/s//repl/format
-/'/!/assign
-/'/!/debug
-/'/</_x
+/!/make/bundle
+/'/!/oscbn/parse
+/!/push
+/'/!/lang/set
 /!/bundle/all
 /@/lang/oscbn
 
@@ -184,17 +187,11 @@
 /#/
 /#/ Change to the protOSC parser / formatter.
 /#/ ############################################################
-/'/>/_x
 /!/make/bundle
-/s//repl/parse
-/'/!/assign
-/!/make/bundle
-/'/!/format
+/'/!/lined/format
 /!/push
-/s//repl/format
-/'/!/assign
-/'/!/debug
-/'/</_x
+/!/make/bundle
+/'/!/lang/set
 /!/bundle/all
 /@/lang/protosc
 
