@@ -112,7 +112,7 @@ void oserepl_lookup(ose_bundle osevm)
     ose_bundle vm_x = ose_enter(osevm, "/_x");
 
     const char * const address = ose_peekString(vm_s);
-    int32_t mo = ose_getFirstOffsetForPMatch(vm_e, address);
+    int32_t mo = ose_getFirstOffsetForMatch(vm_e, address);
     if(mo >= OSE_BUNDLE_HEADER_LEN)
     {
         ose_drop(vm_s);
@@ -120,7 +120,7 @@ void oserepl_lookup(ose_bundle osevm)
         return;
     }
     /* if it wasn't present in env, lookup in _x */
-    mo = ose_getFirstOffsetForPMatch(vm_x, address);
+    mo = ose_getFirstOffsetForMatch(vm_x, address);
     if(mo >= OSE_BUNDLE_HEADER_LEN)
     {
         ose_drop(vm_s);
