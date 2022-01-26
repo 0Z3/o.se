@@ -1,7 +1,22 @@
 CC=clang
 ADDITIONAL_REPL_CFLAGS=
 
+.PHONY: all
 all: release
+
+MODULES=o.se.lined o.se.udp o.se.oscbn
+
+.PHONY: all-modules all-modules-debug all-modules-clean
+
+all-modules:
+	for m in $(MODULES); do (cd "$$m" && $(MAKE)); done
+
+all-modules-debug:
+	for m in $(MODULES); do (cd "$$m" && $(MAKE) debug); done
+
+all-modules-clean:
+	for m in $(MODULES); do (cd "$$m" && $(MAKE) clean); done
+
 
 ############################################################
 # files
