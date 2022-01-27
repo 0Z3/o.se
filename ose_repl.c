@@ -69,7 +69,27 @@
 #define ANSI_CSI_ED1 "\033[1J"
 #define ANSI_CSI_ED2 "\033[2J"
 #define ANSI_CSI_ED3 "\033[3J"
+/* colors */
+#define ANSI_COLOR_BLACK "\033[30m"
+#define ANSI_COLOR_RED "\033[31m"
+#define ANSI_COLOR_GREEN "\033[32m"
+#define ANSI_COLOR_YELLOW "\033[33m"
+#define ANSI_COLOR_BLUE "\033[34m"
+#define ANSI_COLOR_MAGENTA "\033[35m"
+#define ANSI_COLOR_CYAN "\033[36m"
+#define ANSI_COLOR_WHITE "\033[37m"
 
+#define ANSI_COLOR_BRIGHT_BLACK "\033[1;30m"
+#define ANSI_COLOR_BRIGHT_RED "\033[1;31m"
+#define ANSI_COLOR_BRIGHT_GREEN "\033[1;32m"
+#define ANSI_COLOR_BRIGHT_YELLOW "\033[1;33m"
+#define ANSI_COLOR_BRIGHT_BLUE "\033[1;34m"
+#define ANSI_COLOR_BRIGHT_MAGENTA "\033[1;35m"
+#define ANSI_COLOR_BRIGHT_CYAN "\033[1;36m"
+#define ANSI_COLOR_BRIGHT_WHITE "\033[1;37m"
+
+#define ANSI_COLOR_RESET "\033[0m"
+                                      
 /* For debugging */
 #ifdef OSE_DEBUG
 __attribute__((used))
@@ -309,10 +329,117 @@ static void oserepl_quit(ose_bundle osevm)
     exit(0);
 }
 
+/* 
+   usage
+*/
+#define USAGE_INDENT_4 "    "
+#define USAGE_INDENT_2 "  "
+#define USAGE_INDENT_WIDTH 4
+#define USAGE_INDENT USAGE_INDENT_ ## 4
+
+#define USAGE_EXPAND_EXPAND(a, b) a # b
+#define USAGE_EXPAND(a, b) USAGE_EXPAND_EXPAND(a, b)
+#define USAGE_OPT_FLAG_WIDTH 12
+#define USAGE_OPT_FLAG_WIDTH_STR \
+    USAGE_EXPAND("", USAGE_OPT_FLAG_WIDTH)
+#define USAGE_OPT_FMT \
+    USAGE_INDENT"%-"USAGE_OPT_FLAG_WIDTH_STR"s: %s\n"
+#define USAGE_DESC_INDENT_COUNT \
+    (USAGE_INDENT_WIDTH + USAGE_OPT_FLAG_WIDTH + 2)
+char usage_desc_indent[USAGE_DESC_INDENT_COUNT + 1];
+
+void usage_print_ldesc_impl(char *ldesc)
+{
+    int len = strlen(ldesc);
+    const int n = 70 - USAGE_DESC_INDENT_COUNT;
+    if(len < n)
+    {
+        printf("%s%s\n", usage_desc_indent, ldesc);
+    }
+    else
+    {
+        int nn = n;
+        while(ldesc[nn] != ' ' && nn > 0)
+        {
+            --nn;
+        }
+        if(nn == 0)
+        {
+            /* this string has like 50 characters and none of them
+               are spaces! */
+            nn = n;
+        }
+        char c = ldesc[nn];
+        ldesc[nn] = 0;
+        printf("%s%s\n", usage_desc_indent, ldesc);
+        ldesc[nn] = c;
+        usage_print_ldesc_impl(ldesc + nn + 1);
+    }
+}
+
+void usage_print_ldesc(const char * const ldesc)
+{
+    int ldesclen = strlen(ldesc);
+    char myldesc[ldesclen + 1];
+    memcpy(myldesc, ldesc, ldesclen + 1);
+    usage_print_ldesc_impl(myldesc);
+}
+
+static void usage_print_opt(const char * const flag,
+                            const char * const sdesc)
+{   
+    printf(USAGE_OPT_FMT, flag, sdesc);
+}
+
+static void usage_setup(void)
+{
+    memset(usage_desc_indent, ' ', USAGE_DESC_INDENT_COUNT);
+    usage_desc_indent[USAGE_DESC_INDENT_COUNT] = 0;
+}
+
+static void usage(const char * const progname)
+{
+    usage_setup();
+    printf("\n");
+    printf("%s ["
+           ANSI_COLOR_BRIGHT_WHITE"OPTIONS"ANSI_COLOR_RESET
+           "] ["
+           ANSI_COLOR_BRIGHT_WHITE"OSC ADDRESSES"ANSI_COLOR_RESET
+           "]\n", progname);
+
+    printf("\n");
+    
+    printf(ANSI_COLOR_BRIGHT_WHITE"OPTIONS:\n"ANSI_COLOR_RESET);
+    usage_print_opt("-f <file>", ".ose file to load at startup.");
+    usage_print_ldesc("If used, this flag must be the first option.");
+    usage_print_opt("-h", "Print this help message.");
+    
+    printf("\n");
+    
+    printf(ANSI_COLOR_BRIGHT_WHITE"OSC ADDRESSES:\n"ANSI_COLOR_RESET);
+    printf(USAGE_INDENT"0 or more OSC addresses that will be read and\n"
+           USAGE_INDENT"executed in sequence from left to right.\n");
+
+    printf("\n");
+    
+    printf(ANSI_COLOR_BRIGHT_WHITE"Examples:\n"ANSI_COLOR_RESET);
+    printf(USAGE_INDENT"./o.se -f repl.ose '/s/Hello World!' '/!/println'\n");
+    
+    printf("\n");
+}
+
 sigjmp_buf jmp_buffer;
 
 int main(int ac, char **av)
 {
+    if(ac == 1)
+    {
+        /* when o.se is run without any initial commands, not only
+           does it not do anything, you can't even quit it because
+           it's not listening to stdin! */
+        usage(*av);
+        exit(0);
+    }
     int caught;
     /* install signal handler */
     if(signal(SIGINT, oserepl_sigHandler) == SIG_ERR)
