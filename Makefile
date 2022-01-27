@@ -1,5 +1,20 @@
+############################################################
+# Variables setable from the command line:
+#
+# CCOMPILER (default: clang)
+# DEBUG_SYMBOLS (default: DWARF)
+# EXTRA_CFLAGS (default: none)
+#
+# for submodules that contain c++:
+# CPPCOMPILER
+# EXTRA_CPPFLAGS
+############################################################
+
+ifndef CCOMPILER
 CC=clang
-ADDITIONAL_REPL_CFLAGS=
+else
+CC=$(CCOMPILER)
+endif
 
 .PHONY: all
 all: release
@@ -9,14 +24,13 @@ MODULES=o.se.lined o.se.udp o.se.oscbn
 .PHONY: all-modules all-modules-debug all-modules-clean
 
 all-modules:
-	for m in $(MODULES); do (cd "$$m" && $(MAKE)); done
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE)); done
 
 all-modules-debug:
-	for m in $(MODULES); do (cd "$$m" && $(MAKE) debug); done
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) debug); done
 
 all-modules-clean:
-	for m in $(MODULES); do (cd "$$m" && $(MAKE) clean); done
-
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) clean); done
 
 ############################################################
 # files
@@ -69,8 +83,8 @@ DEFINES=\
 
 INCLUDES=-I. -I$(LIBOSE_DIR)
 
-CFLAGS_DEBUG=-Wall -DOSE_CONF_DEBUG -O0 -glldb -fsanitize=undefined
-CFLAGS_RELEASE=-Wall -O3
+CFLAGS_DEBUG=-Wall -DOSE_CONF_DEBUG -O0 -g$(DEBUG_SYMBOLS) $(EXTRA_CFLAGS) # -fsanitize=undefined
+CFLAGS_RELEASE=-Wall -O3 $(EXTRA_CFLAGS)
 
 LDFLAGS=-lm -ldl -rdynamic
 
