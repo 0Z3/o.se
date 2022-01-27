@@ -10,27 +10,16 @@
 # EXTRA_CPPFLAGS
 ############################################################
 
+.PHONY: default
+default: release
+
 ifndef CCOMPILER
 CC=clang
 else
 CC=$(CCOMPILER)
 endif
 
-.PHONY: all
-all: release
-
 MODULES=o.se.lined o.se.udp o.se.oscbn
-
-.PHONY: all-modules all-modules-debug all-modules-clean
-
-all-modules:
-	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE)); done
-
-all-modules-debug:
-	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) debug); done
-
-all-modules-clean:
-	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) clean); done
 
 ############################################################
 # files
@@ -105,6 +94,22 @@ o.se: CMD=$(CC) $(CFLAGS) $(LDFLAGS) -o o.se \
 o.se: $(OSE_FILES:=.c) $(REPL_FILES:=.c) $(LIBOSE_DIR)/sys/ose_endian.h ose_version.h
 	$(CMD)
 
-.PHONY: clean
+.PHONY: clean all all-modules all-modules-debug all-modules-clean
+
 clean:
 	rm -rf ose *.dSYM ose_version.h
+
+all: all-modules release
+
+all-debug: all-modules-debug debug
+
+all-clean: all-modules-clean clean
+
+all-modules:
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE)); done
+
+all-modules-debug:
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) debug); done
+
+all-modules-clean:
+	for m in $(MODULES); do (cd "$$m" && CCOMPILER=$(CC) DEBUG_SYMBOLS=$(DEBUG_SYMBOLS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CPPCOMPILER=$(CPPCOMPILER) EXTRA_CPPFLAGS=$(EXTRA_CPPFLAGS) $(MAKE) clean); done
