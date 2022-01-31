@@ -207,8 +207,7 @@ static void oserepl_load(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     ose_bundle vm_i = OSEVM_INPUT(osevm);
-    if(ose_isStringType(ose_peekMessageArgType(vm_s))
-       == OSETT_TRUE)
+    if(ose_isStringType(ose_peekMessageArgType(vm_s)))
     {
         const char * const str = ose_peekString(vm_s);
         const size_t len = strlen(str);
@@ -234,8 +233,7 @@ static void oserepl_load(ose_bundle osevm)
 static void oserepl_read(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
-    if(ose_isStringType(ose_peekMessageArgType(vm_s))
-       == OSETT_TRUE)
+    if(ose_isStringType(ose_peekMessageArgType(vm_s)))
     {
         const char * const str = ose_peekString(vm_s);
         ose_readFile(vm_s, str);
@@ -250,7 +248,7 @@ static void oserepl_readFromFileDescriptor(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
     int32_t fd;
-    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+    if(ose_bundleHasAtLeastNElems(vm_s, 1)
        && ose_peekType(vm_s) == OSETT_MESSAGE
        && ose_peekMessageArgType(vm_s) == OSETT_INT32)
     {
@@ -287,7 +285,7 @@ static void oserepl_format(ose_bundle osevm)
 static void oserepl_print(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
-    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+    if(ose_bundleHasAtLeastNElems(vm_s, 1)
        && ose_peekType(vm_s) == OSETT_MESSAGE
        && ose_peekMessageArgType(vm_s) == OSETT_STRING)
     {
@@ -301,7 +299,7 @@ static void oserepl_print(ose_bundle osevm)
 static void oserepl_println(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
-    if(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE
+    if(ose_bundleHasAtLeastNElems(vm_s, 1)
        && ose_peekType(vm_s) == OSETT_MESSAGE
        && ose_peekMessageArgType(vm_s) == OSETT_STRING)
     {
@@ -314,7 +312,7 @@ static void oserepl_println(ose_bundle osevm)
 static void oserepl_listen(ose_bundle osevm)
 {
     ose_bundle vm_s = OSEVM_STACK(osevm);
-    ose_assert(ose_bundleHasAtLeastNElems(vm_s, 1) == OSETT_TRUE);
+    ose_assert(ose_bundleHasAtLeastNElems(vm_s, 1));
     ose_assert(ose_peekType(vm_s) == OSETT_MESSAGE);
     ose_assert(ose_peekMessageArgType(vm_s) == OSETT_INT32);
     int32_t fileno = ose_popInt32(vm_s);
