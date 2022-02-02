@@ -96,7 +96,7 @@ o.se: $(OSE_FILES:=.c) $(REPL_FILES:=.c) $(LIBOSE_DIR)/sys/ose_endian.h ose_vers
 .PHONY: clean all all-modules all-modules-debug all-modules-clean
 
 clean:
-	rm -rf ose *.dSYM ose_version.h
+	rm -rf o.se *.dSYM ose_version.h
 
 all: all-modules release
 
