@@ -188,10 +188,10 @@ static void oserepl_runHook(ose_bundle osevm,
     /* } */
 }
 
-static void oserepl_init(char *bytes)
+static void oserepl_init(int32_t nbytes, char *bytes)
 {
-    memset(bytes, 0, MAX_BUNDLE_LEN);
-    bundle = ose_newBundleFromCBytes(MAX_BUNDLE_LEN, bytes);
+    memset(bytes, 0, nbytes);
+    bundle = ose_newBundleFromCBytes(nbytes, bytes);
     osevm = osevm_init(bundle);
     vm_i = OSEVM_INPUT(osevm);
     vm_s = OSEVM_STACK(osevm);
@@ -468,7 +468,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    oserepl_init(bytes);
+    oserepl_init(MAX_BUNDLE_LEN, bytes);
 
     ose_pushMessage(vm_x, "/name", strlen("/name"), 1,
                     OSETT_STRING, av[0]);

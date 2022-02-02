@@ -31,7 +31,6 @@ OSE_FILES_BASENAMES=\
 	ose_stackops\
 	ose_context\
 	ose_match\
-	ose_assert\
 	ose_symtab\
 	ose_vm\
 	ose_builtins\
