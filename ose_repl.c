@@ -556,6 +556,11 @@ int main(int ac, char **av)
                         OSEREPL_HOOK_INIT_POST,
                         strlen(OSEREPL_HOOK_INIT_POST));
     }
+    if(nfd == 0)
+    {
+        exit(0);
+    }
+    
     ose_termRaw();
     while(1)
     {
