@@ -8,6 +8,11 @@
 /!/load
 /<</_e
 
+/#/ Load debugger.
+/s/./o.se.db/o.se.db.so
+/!/load
+/<</_e
+
 /#/ ############################################################
 /#/ /@/make/fd/cb
 /#/
@@ -197,6 +202,38 @@
 
 /s/./ansi_colorcodes.ose
 /!/load
+
+/#/ ############################################################
+/#/ Debugger
+/#/ ############################################################
+
+/$/db/enter
+/@/exception
+
+/'/!/Debugger entered
+/'/!/println
+
+/'/>/lo
+/s/debug / 
+/s//ps
+/'/!/assign
+/'/</lo
+
+/'/!/lined/prompt
+/'/!/lined/print
+/'/!/print
+/'/!/make/bundle
+/#/ /'/!/db/enter
+/!/bundle/all
+/@/db/start
+
+/'/>/lo
+/s// 
+/s//ps
+/'/!/assign
+/'/</lo
+/!/bundle/all
+/@/db/end
 
 /#/ ############################################################
 /#/ Finalize everything we've set up and initialize the prompt.
