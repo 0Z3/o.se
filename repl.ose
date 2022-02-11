@@ -68,6 +68,9 @@
 /!/make/bundle
 /@/repl/parse
 
+/$/exec1
+/@/repl/eval
+
 /'/!/lined/format
 /!/bundle/all
 /@/repl/format
@@ -96,7 +99,7 @@
 
 /#/ Execute the command that was entered.
 /'/!/repl/parse
-/'/!/exec1
+/'/!/repl/eval
 /#/ Store the environment
 /'/</_e
 
@@ -109,7 +112,7 @@
 /'/!/color/text
 /'/!/println
 
-/#/ Finally, set up our prompt. No need to print, since this
+/#/ Set up the prompt. No need to print, since this
 /#/ procedure was called by the one that handles stdin, which
 /#/ prints after processing the most recent char.
 /'/!/lined/prompt
@@ -162,9 +165,34 @@
 /'/!/swap
 /s//repl/format
 /'/!/assign
+/'/!/swap
+/s//repl/eval
+/'/!/assign
 /'/</_x
 /!/bundle/all
 /@/lang/set
+
+/#/ ############################################################
+/#/ /@/lang/oscript
+/#/ 
+/#/ Change to the oscript parser / formatter.
+/#/ ############################################################
+/#/ /s/o.se.oscript/o.se.oscript.so
+/s/test.ose
+/'/!/load
+/!/bundle/all
+/@/load/lang/oscript
+
+/'/$/eval
+/!/make/bundle
+/'/!/oscbn/println
+/!/push
+/!/make/bundle
+/'/!/oscript/parse
+/!/push
+/'/!/lang/set
+/!/bundle/all
+/@/lang/oscript
 
 /#/ ############################################################
 /#/ /@/lang/oscbn
@@ -177,6 +205,7 @@
 /!/bundle/all
 /@/load/lang/oscbn
 
+/$/exec1
 /!/make/bundle
 /'/!/oscbn/println
 /!/push
@@ -192,6 +221,7 @@
 /#/
 /#/ Change to the protOSC parser / formatter.
 /#/ ############################################################
+/$/exec1
 /!/make/bundle
 /'/!/lined/format
 /!/push
@@ -223,7 +253,6 @@
 /'/!/lined/print
 /'/!/print
 /'/!/make/bundle
-/#/ /'/!/db/enter
 /!/bundle/all
 /@/db/start
 

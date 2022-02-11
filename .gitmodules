@@ -10,3 +10,6 @@
 [submodule "o.se.oscbn"]
 	path = o.se.oscbn
 	url = https://github.com/0Z3/o.se.oscbn.git
+[submodule "o.se.db"]
+	path = o.se.db
+	url = https://github.com/0Z3/o.se.db

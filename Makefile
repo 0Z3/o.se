@@ -19,7 +19,7 @@ else
 CC=$(CCOMPILER)
 endif
 
-MODULES=o.se.lined o.se.udp o.se.oscbn
+MODULES=o.se.lined o.se.udp o.se.oscbn o.se.db
 
 ############################################################
 # files
