@@ -236,11 +236,43 @@ static void oserepl_read(ose_bundle osevm)
     if(ose_isStringType(ose_peekMessageArgType(vm_s)))
     {
         const char * const str = ose_peekString(vm_s);
-        ose_readFile(vm_s, str);
+        ose_readFileLines(vm_s, str);
     }
     else
     {
         fprintf(stderr, "/!/read requires a path on the stack");
+    }
+}
+
+static void oserepl_write(ose_bundle osevm)
+{
+    ose_bundle vm_s = OSEVM_STACK(osevm);
+    if(ose_bundleHasAtLeastNElems(vm_s, 1)
+       && ose_peekType(vm_s) == OSETT_MESSAGE
+       && ose_peekMessageArgType(vm_s) == OSETT_STRING)
+    {
+        const char * const path = ose_peekString(vm_s);
+        FILE *fp = fopen(path, "w");
+        ose_drop(vm_s);
+        ose_assert(fp);
+        if(ose_bundleHasAtLeastNElems(vm_s, 1)
+           && ose_peekType(vm_s) == OSETT_BUNDLE)
+        {
+            int32_t o = ose_getLastBundleElemOffset(vm_s);
+            int32_t oo = OSE_BUNDLE_HEADER_LEN;
+            int32_t s = ose_readInt32(vm_s, o);
+            o += OSE_BUNDLE_HEADER_LEN + 4;
+            while(oo < s)
+            {
+                int32_t ss = ose_readInt32(vm_s, o);
+                const char * const str = ose_readString(vm_s, o + 12);
+
+                fwrite((void *)str, 1, strlen(str), fp);
+                fwrite((void *)"\n", 1, 1, fp);
+                oo += ss + 4;
+                o += ss + 4;
+            }
+        }
     }
 }
 
@@ -322,9 +354,16 @@ static void oserepl_listen(ose_bundle osevm)
         };
 }
 
-static void oserepl_quit(ose_bundle osevm)
+static void oserepl_exit(ose_bundle osevm)
 {
     exit(0);
+}
+
+static void oserepl_quit(ose_bundle osevm)
+{
+    ose_pushString(vm_i, "/!/!");
+    ose_pushAlignedPtr(vm_i, oserepl_exit);
+    ose_pushString(vm_i, "/!/repl/atexit");
 }
 
 /* 
@@ -483,6 +522,8 @@ int main(int ac, char **av)
     ose_pushMessage(vm_x, "/readfd", strlen("/readfd"), 1,
                     OSETT_ALIGNEDPTR,
                     oserepl_readFromFileDescriptor);
+    ose_pushMessage(vm_x, "/write", strlen("/write"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_write);
     ose_pushMessage(vm_x, "/format", strlen("/format"), 1,
                     OSETT_ALIGNEDPTR, oserepl_format);
     ose_pushMessage(vm_x, "/print", strlen("/print"), 1,
@@ -519,11 +560,13 @@ int main(int ac, char **av)
         {
         case SIGABRT:
             /* oserepl_init(bytes); */
-            exit(0);
+            oserepl_quit(osevm);
             break;
         case SIGTERM:
+            oserepl_quit(osevm);
+            break;
         case SIGINT:
-            exit(0);
+            oserepl_quit(osevm);
             break;
         }
         if(signal(caught, oserepl_sigHandler) == SIG_ERR)
@@ -558,7 +601,7 @@ int main(int ac, char **av)
     }
     if(nfd == 0)
     {
-        exit(0);
+        oserepl_quit(osevm);
     }
     
     ose_termRaw();
@@ -584,7 +627,7 @@ int main(int ac, char **av)
             }
         }
     }
-    exit(0);
+    oserepl_quit(osevm);
     return 0;
 }
 

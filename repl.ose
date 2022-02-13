@@ -119,6 +119,17 @@
 /!/bundle/all
 /@/lined/binding/RET
 
+/'/>/lh
+/'/!/unpack/drop
+/'/!/drop
+/'/$/homedir
+/s//.ose_history
+/'/!/push
+/'/!/concat/strings
+/'/!/write
+/!/bundle/all
+/@/repl/atexit
+
 /#/ ############################################################
 /#/ Process input.
 /#/ ############################################################
@@ -267,6 +278,17 @@
 /#/ ############################################################
 /#/ Finalize everything we've set up and initialize the prompt.
 /#/ ############################################################
+
+/$/homedir
+/s//.ose_history
+/!/push
+/!/concat/strings
+/!/read
+/!/nip
+/!/bundle/all
+/$/lined/addtohist
+/!/map
+/!/clear
 
 /#/ Move everything we stored in the env to _x, and clear the env.
 />/_e
