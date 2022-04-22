@@ -366,6 +366,13 @@ static void oserepl_quit(ose_bundle osevm)
     ose_pushString(vm_i, "/!/repl/atexit");
 }
 
+static void oserepl_system(ose_bundle osevm)
+{
+    const char * const cmd = ose_peekString(vm_s);
+    int r = system(cmd);
+    ose_pushInt32(vm_s, r);
+}
+
 /* 
    usage
 */
@@ -540,6 +547,8 @@ int main(int ac, char **av)
                     OSETT_INT32, STDOUT_FILENO);
     ose_pushMessage(vm_x, "/stderr", strlen("/stderr"), 1,
                     OSETT_INT32, STDERR_FILENO);
+    ose_pushMessage(vm_x, "/system", strlen("/system"), 1,
+                    OSETT_ALIGNEDPTR, oserepl_system);
 #ifdef OSE_DEBUG
     ose_pushMessage(vm_x, "/debug", strlen("/debug"), 1,
                     OSETT_ALIGNEDPTR, oserepl_debug);
