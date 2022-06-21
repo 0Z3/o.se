@@ -40,7 +40,7 @@
 /#/ the file descriptor that is associated with that port has
 /#/ data to be read.
 /#/ ############################################################
-/s/127.0.0.1
+/s/0.0.0.0
 /'/!/swap
 /'/!/udp/sock/bind
 /'/!/dup
